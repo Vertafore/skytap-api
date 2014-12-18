@@ -1,6 +1,6 @@
 skytap-api
 ==========
-skytapAPI is a pythonic implementation of a [Facade pattern](https://en.wikipedia.org/wiki/Facade_pattern) for the [Skytap Rest API](help.skytap.com/#api-documentation).
+skytapAPI is a pythonic implementation of a [Facade pattern](https://en.wikipedia.org/wiki/Facade_pattern) for the [Skytap Rest API](https://help.skytap.com/#api-documentation).
 
 Requirements
 ------------
