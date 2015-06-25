@@ -16,6 +16,7 @@ limitations under the License.
 import json
 import time
 import requests
+import collections
 
 
 #region Utility Functions
@@ -82,18 +83,6 @@ class AbstractDataProvider():
         r = requests.request(request_type, url, auth=(self.username, self.password),
                              headers=headers, params=params, data=data, files=files)
         if r.status_code not in response_codes:
-            print(r.url)
-            print('Request Type: {}'.format(request_type))
-            print('Path: {}'.format(path))
-            print('Params: {}'.format(params))
-            print('Data: {}'.format(data))
-            print('Files: {}'.format(files))
-            print('Expected Response Type: {}'.format(response_type))
-            print('Expected Response Codes: {}'.format(response_codes))
-            print('HTTP Status Code: {}'.format(r.status_code))
-            print('Request Headers: {}'.format(r.request.headers))
-            print('Response Headers: {}'.format(r.headers))
-            print('Response Body: {}\n'.format(r.text))
             r.raise_for_status()
         if response_type == 'json':
             return r.json()
@@ -158,6 +147,10 @@ class SkytapAPI(AbstractDataProvider):
         return '{}/configurations/{}'.format(cls.projects(project_id), configuration_id)
 
     @classmethod
+    def project_project_templates(cls, project_id):
+        return '{}/templates'.format(cls.projects(project_id))
+
+    @classmethod
     def interfaces(cls, config_id, vm_id, interface_id):
         return '{}/interfaces/{}'.format(cls.vms(config_id, vm_id), interface_id)
 
@@ -168,6 +161,10 @@ class SkytapAPI(AbstractDataProvider):
     @classmethod
     def vpns(cls, vpn_id):
         return 'vpns/{}'.format(vpn_id)
+
+    @classmethod
+    def template(cls, template_id):
+        return 'templates/{}'.format((template_id))
     # endregion
 
     # region Configuration Resource
@@ -202,6 +199,72 @@ class SkytapAPI(AbstractDataProvider):
         path = self.configs(config_id)
         params = {attr: value}
         return self.request('put', path, params)
+
+    def config_restart_multiselect(self, config_id, vm_list):
+        """
+        Restart multiple VMs in a config
+        :param config_id:
+        :param vm_list:
+        :return:
+        """
+        path = self.configs(config_id)
+        d = {"runstate": "running", "multiselect": "{}".format(vm_list)}
+        params = d
+        return self.request('put', path, params)
+
+    def config_shutdown_multiselect(self, config_id, vm_list):
+        """
+        Shutdown multiple VMs in a config
+        :param config_id:
+        :param vm_list:
+        :return:
+        """
+        path = self.configs(config_id)
+        d = {"runstate": "stopped", "multiselect": "{}".format(vm_list)}
+        params = d
+        return self.request('put', path, params)
+    #endregion
+    #region templates
+    def get_template(self, template_id):
+        """
+        :param template_id:
+        :return:
+        """
+        path = self.template(template_id)
+        return self.request('get', path)
+
+    def template_create_multiselect(self, config_id, vm_list):
+        """
+        Create a template from a list of VMs
+        :param config_id:
+        :param vm_list:
+        :return:
+        """
+        path = self.template('')
+        params = {"configuration_id": "{}".format(config_id), "vm_instance_multiselect": "{}".format(vm_list)}
+        return self.request('post', path, params)
+
+    def update_template(self, template_id, attr, value):
+        """
+        Update a value in the template
+        :param template_id:
+        :param attr:
+        :param value:
+        :return:
+        """
+        path = self.template(template_id)
+        params = {attr: value}
+        return self.request('put', path, params)
+
+    def delete_template(self, template_id):
+        """
+        Delete an existing template.
+        Does not return
+        """
+        path = self.template(template_id)
+        # noinspection PyTypeChecker
+        self.request('delete', path, response_type=None)
+
     #endregion
 
     #region User Resource
@@ -310,6 +373,14 @@ class SkytapAPI(AbstractDataProvider):
         """
         path = self.vms(config_id, vm_id)
         return self.request('get', path)
+
+    def update_vm(self, config_id, vm_id, attr, value):
+        """
+        Update an existing configuration.
+        """
+        path = self.vms(config_id, vm_id)
+        params = {attr: value}
+        return self.request('put', path, params)
     #endregion
 
     #region Publish Service Resource
@@ -393,6 +464,16 @@ class SkytapAPI(AbstractDataProvider):
         path = self.project_configurations(project_id, configuration_id)
         return self.request('get', path)
 
+    def get_project_templates(self, project_id):
+        """
+        :param project_id:
+        :param template_id:
+        :return:
+        """
+        path = self.project_project_templates(project_id)
+        return self.request('get', path)
+
+
     def add_configuration_to_project(self, project_id, configuration_id):
         """
         Add a configuration to a project
@@ -401,6 +482,16 @@ class SkytapAPI(AbstractDataProvider):
         :return:
         """
         path = self.project_configurations(project_id, configuration_id)
+        return self.request('post', path)
+
+    def add_template_to_project(self, project_id, template_id):
+        """
+        Add a template to a project
+        :param template_id:
+        :param project_id:
+        :return:
+        """
+        path = '{}/templates/{}'.format(self.projects(project_id), template_id)
         return self.request('post', path)
     #endregion
 
