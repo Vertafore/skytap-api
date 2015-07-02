@@ -164,7 +164,17 @@ class SkytapAPI(AbstractDataProvider):
 
     @classmethod
     def template(cls, template_id):
-        return 'templates/{}'.format((template_id))
+        return 'templates/{}'.format(template_id)
+
+    @classmethod
+    def ips(cls, ip_id):
+        return 'ips/{}'.format(ip_id)
+    # endregion
+
+    # region Public IP Resource
+    def get_ips(self, ip_id=''):
+        path = self.ips(ip_id)
+        return self.request('get', path)
     # endregion
 
     # region Configuration Resource
