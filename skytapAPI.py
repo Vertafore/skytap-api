@@ -65,7 +65,7 @@ class AbstractDataProvider():
         self.password = password
 
     def request(self, request_type, path, params=None, data=None, files=None, response_type='json',
-                response_codes=None):
+                response_codes=None, api_version='v1'):
         """
         Handles requests for each api call to a data provider
         and returns the expected data. If the request fails, print debugging information.
@@ -75,7 +75,14 @@ class AbstractDataProvider():
         if response_codes is None:
             response_codes = [requests.codes.ok]
 
-        headers = {'content-type': 'application/json', 'accept': 'application/json'}
+        if api_version == 'v1':
+            headers = {'content-type': 'application/json', 'accept': 'application/json'}
+        elif api_version == 'v2':
+            headers = {'content-type': 'application/json', 'accept': 'application/vnd.skytap.api.v2+json'}
+            path = 'v2/{}'.format(path)
+        else:
+            raise ValueError('Unknown API Version "{}"'.format(api_version))
+
         path = path.rstrip('/')
         url = '{}/{}'.format(self.base_url, path)
         if data:
@@ -340,6 +347,22 @@ class SkytapAPI(AbstractDataProvider):
         """
         path = '{}/users/{}'.format(self.department(department_id), user_id)
         return self.request('post', path)
+
+    def set_department_limits(self, department_id, svm_hours=None, concurrent_svms=None, storage=None,
+                              concurrent_vms=None):
+        path = '{}/quotas'.format(self.department(department_id))
+        data = [{'id': 'svm_hours',         'limit': svm_hours},
+                  {'id': 'concurrent_svms',   'limit': concurrent_svms},
+                  {'id': 'storage',           'limit': storage},
+                  {'id': 'concurrent_vms',    'limit': concurrent_vms}]
+
+        return self.request('put', path, data=data, api_version='v2')
+
+    def set_department_description(self, department_id, description):
+        path = self.department(department_id)
+        params = {'description': description}
+        return self.request('put', path, params=params, api_version='v2')
+
     #endregion
 
     #region VPN Resource
