@@ -154,6 +154,10 @@ class SkytapAPI(AbstractDataProvider):
         return '{}/configurations/{}'.format(cls.projects(project_id), configuration_id)
 
     @classmethod
+    def project_users(cls, project_id):
+        return '{}/users'.format(cls.projects(project_id))
+
+    @classmethod
     def project_project_templates(cls, project_id):
         return '{}/templates'.format(cls.projects(project_id))
 
@@ -499,6 +503,15 @@ class SkytapAPI(AbstractDataProvider):
         :return:
         """
         path = self.project_configurations(project_id, configuration_id)
+        return self.request('get', path)
+
+    def get_project_users(self, project_id):
+        """
+        get the users in a project
+        :param project_id: 
+        :return: 
+        """
+        path = self.project_users(project_id)
         return self.request('get', path)
 
     def get_project_templates(self, project_id):
